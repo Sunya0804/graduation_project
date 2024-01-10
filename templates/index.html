@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+    <h1>소음 섞인 음성 파일 텍스트로 변환하기</h1>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="audioFile" accept="audio/*" required>
+            <br>
+            <button type="button" onclick="uploadFile()">변환하기</button>
+        </form>
+        <br>
+        <div id="result_print"><!--결과물 출력하는 곳--></div>
+
+        <script>
+            function uploadFile() {
+                var audioFileInput = document.getElementById('audioFile');
+                var audioFile = audioFileInput.files[0];
+                
+                if (!audioFile) {
+                    alert("음성 파일을 선택하세요.");
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('audioFile', audioFile);
+
+                var resultElement = document.getElementById('result_print');
+                resultElement.innerText = '';  // 결과 초기화
+
+                // AbortController 생성
+                var controller = new AbortController();
+                var signal = controller.signal;
+
+                // timeout 설정 (예: 10초)
+                var timeoutId = setTimeout(() => {
+                    controller.abort();
+                }, 120000);
+
+                fetch('https://graduation-project-takzy.run-asia-northeast1.goorm.site', {
+                    method: 'POST',
+                    body: formData,
+                    signal: signal // AbortController의 signal을 전달
+                })
+                .then(response => response.text())
+                .then(data => {
+                    resultElement.innerText = data;
+                    clearTimeout(timeoutId); // 요청이 성공하면 timeout 제거
+                })
+                .catch(error => {
+                    if (error.name === 'AbortError') {
+                        console.error('요청이 시간 초과되었습니다.');
+                    } else {
+                        console.error('오류 발생:', error);
+                    }
+                });
+            }
+        </script>
+
+{% endblock %}
